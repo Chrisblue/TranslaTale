@@ -7,11 +7,15 @@ Imports System.Xml
 Imports System.Text
 
 Public Class frmMain
+
     Dim actualColor As String = "white"
     Dim lastClicked As Integer = 0
     Dim opened As Boolean = True
     Dim saved As Boolean = True
     Dim fileNameTitle As String = ""
+    Dim stringsTranslated As Integer = 0
+    Dim stringsUntranslated As Integer = 0
+    
     Private Sub RadioButton1_CheckedChanged(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles rbTextbox.CheckedChanged
         picTxtFlowey.Visible = False
         picTxtEnemy.Visible = False
@@ -120,24 +124,22 @@ Public Class frmMain
         End If
 
         Dim i As Integer
-        Dim transLines As Integer = 0
-        Dim untransLines As Integer = 0
         For i = 0 To numLines - 1
             Dim itemToAdd As New ListViewItem({i + 1, lines(i), lines2(i)})
             If lines(i) <> lines2(i) Then
                 itemToAdd.BackColor = Color.LightGreen
-                transLines = transLines + 1
+                stringsTranslated = stringsTranslated + 1
             Else
                 itemToAdd.BackColor = Color.LightSalmon
-                untransLines = untransLines + 1
+                stringsUntranslated = stringsUntranslated + 1
             End If
             ListView1.Items.Add(itemToAdd)
         Next i
         ListView1.Enabled = True
         TextBox1.Enabled = True
         SaveToolStripMenuItem.Enabled = True
-        ttipUntranslated.Text = untransLines
-        ttipTranslated.Text = transLines
+        ttipUntranslated.Text = stringsUntranslated
+        ttipTranslated.Text = stringsTranslated
         ttipTotal.Text = numLines
         AddToolStripMenuItem.Enabled = True
         ToolStripButton2.Enabled = True
@@ -155,19 +157,28 @@ Public Class frmMain
     End Sub
 
     Private Sub TextBox1_KeyUp(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyEventArgs) Handles TextBox1.KeyUp
-        Timer1.Enabled = False
+        Timer1.Stop()
         If ListView1.SelectedItems.Count > 0 Then
             ListView1.SelectedItems(0).SubItems(2).Text = TextBox1.Text
-            If ListView1.SelectedItems(0).SubItems(1).Text <> TextBox1.Text Then
-                ListView1.SelectedItems(0).BackColor = Color.LightGreen
-                saved = False
-                Me.Text = "TranslaTale - " + fileNameTitle + " *"
-                SaveToolStripMenuItem.Enabled = True
+            saved = False
+            Me.Text = "TranslaTale - " + fileNameTitle + " *"
+            SaveToolStripMenuItem.Enabled = True
+
+            If (ListView1.SelectedItems(0).BackColor = Color.LightGreen) Then
+                If ListView1.SelectedItems(0).SubItems(1).Text = TextBox1.Text Then
+                    ListView1.SelectedItems(0).BackColor = Color.LightSalmon
+                    stringsUntranslated = stringsUntranslated + 1
+                    stringsTranslated = stringsTranslated - 1
+                End If
             Else
-                ListView1.SelectedItems(0).BackColor = Color.LightSalmon
+                If ListView1.SelectedItems(0).SubItems(1).Text <> TextBox1.Text Then
+                    ListView1.SelectedItems(0).BackColor = Color.LightGreen
+                    stringsTranslated = stringsTranslated + 1
+                    stringsUntranslated = stringsUntranslated - 1
+                End If
             End If
         End If
-        Timer1.Enabled = True
+        Timer1.Start()
     End Sub
 
     Private Sub SaveToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles SaveToolStripMenuItem.Click
@@ -621,8 +632,6 @@ Public Class frmMain
     End Function
 
     Public Function countTranslated()
-        Dim stringsTranslated As Integer = 0
-        Dim stringsUntranslated As Integer = 0
         For Each item As ListViewItem In Me.ListView1.Items
             If item.BackColor = Color.LightGreen Then
                 stringsTranslated = stringsTranslated + 1
@@ -865,8 +874,9 @@ Public Class frmMain
 
     Private Sub Timer1_Tick(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Timer1.Tick
         showText(TextBox1.Text)
-        countTranslated()
-        Timer1.Enabled = False
+        ttipUntranslated.Text = stringsUntranslated
+        ttipTranslated.Text = stringsTranslated
+        Timer1.Stop()
     End Sub
 
     Private Sub tsSearchPrev_Click(ByVal sender As System.Object, ByVal e As System.EventArgs)
